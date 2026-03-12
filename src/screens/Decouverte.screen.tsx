@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -8,20 +8,33 @@ import {
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
+  TextInput,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { DiscoveryNavigationProp } from "../types/navigation";
 import { UrbanEvent } from "../types";
 import api from "../services/api.service";
+import EventCard from "../components/EventCard";
 
 const DiscoveryScreen: React.FC = () => {
   const [events, setEvents] = useState<UrbanEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigation = useNavigation<DiscoveryNavigationProp>();
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const filterEvents = useMemo(() => {
+    if (!searchQuery) return events;
+    const lowerQuery = searchQuery.toLowerCase();
+    return events.filter(
+      (event) =>
+        event.title.toLowerCase().includes(lowerQuery) ||
+        event.qfap_tags?.toLowerCase().includes(lowerQuery),
+    );
+  }, [searchQuery, events]);
   const fetchEvents = async () => {
     try {
-      const response = await api.get("");
+      const response = await api.get("", { params: { limit: 30 } });
       if (response.data && response.data.results) {
         setEvents(response.data.results);
       }
@@ -37,21 +50,10 @@ const DiscoveryScreen: React.FC = () => {
   }, []);
 
   const renderItem = ({ item }: { item: UrbanEvent }) => (
-    <TouchableOpacity
-      style={styles.card}
+    <EventCard
+      event={item}
       onPress={() => navigation.navigate("Detail", { event: item })}
-    >
-      <Image source={{ uri: item.cover_url }} style={styles.image} />
-      <View style={styles.cardContent}>
-        <Text style={styles.title} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={styles.category}>{item.qfap_tags?.split(";")[0]}</Text>
-        <Text style={styles.address} numberOfLines={1}>
-          {item.address_name}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    />
   );
 
   if (loading) {
@@ -67,12 +69,22 @@ const DiscoveryScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Découverte</Text>
       </View>
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.list}
-      />
+      <View style={styles.container}>
+        <TextInput
+          style={styles.searchBar}
+          placeholder="Rechercher un événement..."
+          placeholderTextColor="#95a5a6"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
+        <FlatList
+          data={filterEvents}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -101,40 +113,16 @@ const styles = StyleSheet.create({
   list: {
     padding: 15,
   },
-  card: {
+
+  searchBar: {
     backgroundColor: "#fff",
-    borderRadius: 15,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    overflow: "hidden",
-  },
-  image: {
-    width: "100%",
-    height: 200,
-  },
-  cardContent: {
-    padding: 15,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
-  },
-  category: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "600",
-    marginBottom: 5,
-    textTransform: "uppercase",
-  },
-  address: {
-    fontSize: 14,
-    color: "#666",
+    marginHorizontal: 16,
+    marginVertical: 15,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#dcdde1",
+    fontSize: 16,
   },
 });
 

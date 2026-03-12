@@ -1,5 +1,5 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useState } from "react";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import MapView, { Marker, Callout } from "react-native-maps";
 import { Text } from "react-native";
 

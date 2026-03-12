@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Alert } from "react-native";
 
 const api = axios.create({
   baseURL:
@@ -11,10 +12,12 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
+
     return config;
   },
   (error) => {
     console.error("[API Request Error]", error);
+    Alert.alert("API Request Error", error.message);
     return Promise.reject(error);
   },
 );
@@ -25,6 +28,7 @@ api.interceptors.response.use(
     console.log(
       `[API Response] ${response.status} from ${response.config.url}`,
     );
+
     return response;
   },
   (error) => {
@@ -35,8 +39,10 @@ api.interceptors.response.use(
       );
     } else if (error.request) {
       console.error("[API Network Error] No response received");
+      Alert.alert("API Network Error", "No response received");
     } else {
       console.error("[API Error]", error.message);
+      Alert.alert("API Error", error.message);
     }
     return Promise.reject(error);
   },

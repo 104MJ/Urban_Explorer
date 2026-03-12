@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Button } from "react-native";
 import { getData } from "../services/donee.service";
 import { PointOfInterest } from "../types/index";
 import PointsInteretMap from "../components/Carte";
@@ -7,6 +7,7 @@ import PointsInteretMap from "../components/Carte";
 export const CarteScreen: React.FC = () => {
   const [places, setPlaces] = React.useState<PointOfInterest[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   // recuperation des lieu depuis l API
   const fetchPlaces = async () => {
@@ -33,7 +34,9 @@ export const CarteScreen: React.FC = () => {
         console.error("Erreur lors de la récupération des données");
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des données :", error);
+      setError(
+        "Impossible de contacter le serveur. Vérifiez votre connexion réseau.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -50,6 +53,15 @@ export const CarteScreen: React.FC = () => {
     return (
       <View style={styles.container}>
         <Text>Chargement...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Réessayer" onPress={fetchPlaces} color="#007AFF" />
       </View>
     );
   }
@@ -75,6 +87,17 @@ export const CarteScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 16,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
