@@ -11,9 +11,10 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 
 interface CameraProps {
   onPhotoTaken: (uri: string) => void;
+  onClose?: () => void;
 }
 
-const Camera: React.FC<CameraProps> = ({ onPhotoTaken }) => {
+const Camera: React.FC<CameraProps> = ({ onPhotoTaken, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -46,9 +47,20 @@ const Camera: React.FC<CameraProps> = ({ onPhotoTaken }) => {
         <CameraView ref={cameraRef} style={styles.camera} />
       )}
 
-      <TouchableOpacity style={styles.button} onPress={takePhoto}>
-        <Text style={styles.buttonText}>Prendre une photo</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={takePhoto}>
+          <Text style={styles.buttonText}>Prendre une photo</Text>
+        </TouchableOpacity>
+
+        {onClose && (
+          <TouchableOpacity 
+            style={[styles.button, styles.cancelButton]} 
+            onPress={onClose}
+          >
+            <Text style={styles.buttonText}>Annuler</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -67,12 +79,21 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 250,
   },
-  button: {
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginTop: 10,
+  },
+  button: {
     padding: 12,
     backgroundColor: "#007AFF",
     borderRadius: 8,
     alignItems: "center",
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: "#FF3B30",
   },
   buttonText: {
     color: "white",
