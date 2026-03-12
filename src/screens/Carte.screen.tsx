@@ -59,13 +59,15 @@ export const CarteScreen: React.FC = () => {
   return (
     <View style={{ flex: 1 }}>
       <PointsInteretMap
-        places={places.map((p) => ({
-          nom_usuel: p.name,
-          coordonnees_geo: {
-            lat: p.coordinates.latitude,
-            lon: p.coordinates.longitude,
-          },
-        }))}
+        places={places
+          .filter((p: any) => p.lat_lon)
+          .map((p: any) => ({
+            nom_usuel: p.title || p.address_name,
+            coordonnees_geo: {
+              lat: p.lat_lon.lat,
+              lon: p.lat_lon.lon,
+            },
+          }))}
       />
     </View>
   );

@@ -1,19 +1,26 @@
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RouteProp } from "@react-navigation/native";
-export type RootStackParamList = {
-  MonProfil: undefined;
-  Decouverte: undefined;
-  // a modifier
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { CompositeNavigationProp, RouteProp } from "@react-navigation/native";
+import { UrbanEvent } from "./index";
 
-  Carte: undefined;
-  Detail: { id: string };
+export type DiscoveryStackParamList = {
+  DiscoveryList: undefined;
+  Detail: { event: UrbanEvent };
 };
-export type MonProfilNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  "MonProfil"
+
+export type TabParamList = {
+  DecouverteTab: undefined;
+  Carte: undefined;
+  MonProfil: undefined;
+};
+
+export type DiscoveryNavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<DiscoveryStackParamList>,
+  BottomTabNavigationProp<TabParamList>
 >;
-export type DecouverteNavigationProp = RouteProp<
-  RootStackParamList,
-  "Decouverte"
->;
-export type CarteNavigationProp = RouteProp<RootStackParamList, "Carte">;
+
+export type DetailScreenRouteProp = RouteProp<DiscoveryStackParamList, "Detail">;
+
+export type RootStackParamList = {
+  MainTabs: undefined;
+};
