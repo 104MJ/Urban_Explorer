@@ -1,0 +1,80 @@
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { getData } from "../services/donee.service";
+import { PointOfInterest } from "../types/index";
+import PointsInteretMap from "../components/Carte";
+
+export const CarteScreen: React.FC = () => {
+  const [places, setPlaces] = React.useState<PointOfInterest[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  // recuperation des lieu depuis l API
+  const fetchPlaces = async () => {
+    try {
+      // Appel du service pour récupérer les données
+
+      const response = await getData({
+        name: "",
+        id: "",
+        type: "museum",
+        coordinates: { latitude: 0, longitude: 0 },
+        address: "",
+      });
+      if (response.success) {
+        // Ensure response.data is always an array
+        if (Array.isArray(response.data)) {
+          setPlaces(response.data);
+        } else if (response.data) {
+          setPlaces([response.data]);
+        } else {
+          setPlaces([]);
+        }
+      } else {
+        console.error("Erreur lors de la récupération des données");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données :", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // useEffect exécuté une seule fois au montage du composant
+  // Il lance la récupération des données
+
+  React.useEffect(() => {
+    fetchPlaces();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <Text>Chargement...</Text>
+      </View>
+    );
+  }
+
+  // Une fois les données chargées
+  // on affiche la carte avec les lieux
+  return (
+    <View style={{ flex: 1 }}>
+      <PointsInteretMap
+        places={places.map((p) => ({
+          nom_usuel: p.name,
+          coordonnees_geo: {
+            lat: p.coordinates.latitude,
+            lon: p.coordinates.longitude,
+          },
+        }))}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
