@@ -19,7 +19,10 @@ export type DiscoveryNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<TabParamList>
 >;
 
-export type DetailScreenRouteProp = RouteProp<DiscoveryStackParamList, "Detail">;
+export type DetailScreenRouteProp = RouteProp<
+  DiscoveryStackParamList,
+  "Detail"
+>;
 
 export type RootStackParamList = {
   MainTabs: undefined;

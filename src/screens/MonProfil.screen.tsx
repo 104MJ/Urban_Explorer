@@ -1,36 +1,46 @@
-import React from "react";
-import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, SafeAreaView, Image } from "react-native";
+import Camera from "../components/Camera";
 
 const MonProfilScreen: React.FC = () => {
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Mon Profil</Text>
-        <Text style={styles.text}>Bientôt : Immortalisez votre visite en photo !</Text>
-      </View>
+      <Text style={{ fontSize: 20, margin: 20 }}>Mon Profil</Text>
+      <Camera onPhotoTaken={setPhotoUri} />
+      {photoUri && (
+        <View style={styles.preview}>
+          <Text style={styles.label}>Photo Capturée :</Text>
+          <Image source={{ uri: photoUri }} style={styles.image} />
+        </View>
+      )}
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 20,
     backgroundColor: "#fff",
   },
-  content: {
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    flex: 1,
-  },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
+    marginBottom: 20,
+  },
+  preview: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  label: {
+    fontSize: 16,
     marginBottom: 10,
   },
-  text: {
-    fontSize: 16,
-    color: "#666",
+  image: {
+    width: 200,
+    height: 200,
+    borderRadius: 10,
   },
 });
 
