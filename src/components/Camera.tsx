@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,6 +6,7 @@ import {
   Button,
   TouchableOpacity,
   Image,
+  Animated,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
@@ -18,6 +19,23 @@ const Camera: React.FC<CameraProps> = ({ onPhotoTaken, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]);
+    Animated.loop(pulse).start();
+  }, [scaleAnim]);
 
   if (!permission) return <View />;
 
@@ -40,27 +58,29 @@ const Camera: React.FC<CameraProps> = ({ onPhotoTaken, onClose }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container]}>
       {photoUri ? (
         <Image source={{ uri: photoUri }} style={styles.image} />
       ) : (
         <CameraView ref={cameraRef} style={styles.camera} />
       )}
 
-      <View style={styles.buttonContainer}>
+      <Animated.View
+        style={[styles.buttonContainer, { transform: [{ scale: scaleAnim }] }]}
+      >
         <TouchableOpacity style={styles.button} onPress={takePhoto}>
           <Text style={styles.buttonText}>Prendre une photo</Text>
         </TouchableOpacity>
 
         {onClose && (
-          <TouchableOpacity 
-            style={[styles.button, styles.cancelButton]} 
+          <TouchableOpacity
+            style={[styles.button, styles.cancelButton]}
             onPress={onClose}
           >
             <Text style={styles.buttonText}>Annuler</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </Animated.View>
     </View>
   );
 };

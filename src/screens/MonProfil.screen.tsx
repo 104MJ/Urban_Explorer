@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Animated,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Camera from "../components/Camera";
 import { StorageService } from "../services/storage.service";
 
 const MonProfilScreen: React.FC = () => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const loadSavedData = async () => {
@@ -14,7 +22,21 @@ const MonProfilScreen: React.FC = () => {
       if (savedPhoto) setPhotoUri(savedPhoto);
     };
     loadSavedData();
-  }, []);
+
+    const pulse = Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]);
+    Animated.loop(pulse).start();
+  }, [scaleAnim]);
 
   if (isCameraVisible) {
     return (
@@ -48,13 +70,16 @@ const MonProfilScreen: React.FC = () => {
 
         <Text style={styles.name}>Explorateur Urbain</Text>
         <Text style={styles.stats}>0 lieux visités</Text>
-
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => setIsCameraVisible(true)}
-        >
-          <Text style={styles.actionButtonText}>Prendre un Selfie Souvenir</Text>
-        </TouchableOpacity>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => setIsCameraVisible(true)}
+          >
+            <Text style={styles.actionButtonText}>
+              Prendre un Selfie Souvenir
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         {photoUri && (
           <TouchableOpacity
@@ -75,78 +100,78 @@ const MonProfilScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: "#F2F2F7",
   },
   cameraWrapper: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   profileContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 50,
   },
   avatarContainer: {
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
     borderWidth: 4,
-    borderColor: '#007AFF',
+    borderColor: "#007AFF",
   },
   avatar: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   placeholderAvatar: {
-    backgroundColor: '#E5E5EA',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#E5E5EA",
+    justifyContent: "center",
+    alignItems: "center",
   },
   placeholderText: {
-    color: '#8E8E93',
+    color: "#8E8E93",
   },
   name: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 20,
-    color: '#333',
+    color: "#333",
   },
   stats: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginTop: 5,
   },
   actionButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 25,
     marginTop: 40,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   actionButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: '#FF3B30',
+    borderColor: "#FF3B30",
     marginTop: 15,
   },
   secondaryButtonText: {
-    color: '#FF3B30',
+    color: "#FF3B30",
   },
 });
 
