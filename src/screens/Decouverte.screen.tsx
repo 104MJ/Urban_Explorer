@@ -23,6 +23,8 @@ const DiscoveryScreen: React.FC = () => {
   const navigation = useNavigation<DiscoveryNavigationProp>();
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [page, setPage] = useState(1);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const filterEvents = useMemo(() => {
     if (!searchQuery) return events;
     const lowerQuery = searchQuery.toLowerCase();
@@ -32,22 +34,35 @@ const DiscoveryScreen: React.FC = () => {
         event.qfap_tags?.toLowerCase().includes(lowerQuery),
     );
   }, [searchQuery, events]);
-  const fetchEvents = async () => {
+  const fetchEvents = async (pageNumber = 1) => {
     try {
-      const response = await api.get("", { params: { limit: 30 } });
+      const response = await api.get("", {
+        params: { limit: 30, page: pageNumber },
+      });
       if (response.data && response.data.results) {
-        setEvents(response.data.results);
+        if (pageNumber === 1) {
+          setEvents(response.data.results);
+        } else {
+          setEvents((prevEvents) => [...prevEvents, ...response.data.results]);
+        }
       }
     } catch (error) {
       console.error("Error fetching events:", error);
     } finally {
       setLoading(false);
+      setIsFetchingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    fetchEvents(page);
+  }, [page]);
+
+  const handleLoadMore = () => {
+    if (!isFetchingMore) {
+      setPage((prev) => prev + 1);
+    }
+  };
 
   const renderItem = ({ item }: { item: UrbanEvent }) => (
     <EventCard
@@ -83,6 +98,13 @@ const DiscoveryScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingMore ? (
+              <ActivityIndicator size="small" color="#007AFF" />
+            ) : null
+          }
         />
       </View>
     </SafeAreaView>
