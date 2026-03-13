@@ -15,10 +15,12 @@ const DetailScreen: React.FC = () => {
   const [tempDate, setTempDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [durationHours, setDurationHours] = useState(2);
   const [calendars, setCalendars] = useState<Calendar.Calendar[]>([]);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [reminderMinutes, setReminderMinutes] = useState(15);
 
   useEffect(() => {
     (async () => {
@@ -85,6 +87,9 @@ const DetailScreen: React.FC = () => {
     const newDate = new Date(date);
     newDate.setHours(tempDate.getHours(), tempDate.getMinutes());
     setDate(newDate);
+
+    // Calculer l'heure de fin pour l'aperçu si besoin (optionnel, supprimé pour simplification)
+
     setShowTimePicker(false);
     setShowCalendarModal(true);
   };
@@ -96,16 +101,16 @@ const DetailScreen: React.FC = () => {
     }
 
     try {
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setHours(endDate.getHours() + 2); // Durée par défaut de 2h
+      const finalEndDate = new Date(date);
+      finalEndDate.setHours(finalEndDate.getHours() + durationHours);
 
       const eventId = await Calendar.createEventAsync(selectedCalendarId, {
         title: `Visite : ${event.title}`,
-        startDate,
-        endDate,
+        startDate: date,
+        endDate: finalEndDate,
         location: event.address_name,
         notes: event.description,
+        alarms: reminderMinutes > 0 ? [{ relativeOffset: -reminderMinutes }] : [],
       });
 
       if (eventId) {
@@ -149,7 +154,7 @@ const DetailScreen: React.FC = () => {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>📅 Date et Horaire</Text>
-            <Text style={styles.text}>{event.date_description}</Text>
+            <Text style={styles.text}>{stripHtml(event.date_description || "")}</Text>
           </View>
 
           <View style={styles.section}>
@@ -236,7 +241,7 @@ const DetailScreen: React.FC = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.pickerContainer}>
-            <Text style={styles.modalTitle}>Choisir une heure</Text>
+            <Text style={styles.modalTitle}>Heure de début</Text>
             <DateTimePicker
               value={tempDate}
               mode="time"
@@ -244,6 +249,30 @@ const DetailScreen: React.FC = () => {
               onChange={onChangeTime}
               textColor="#000"
             />
+
+            <View style={styles.durationContainer}>
+              <Text style={styles.durationTitle}>Durée de la visite</Text>
+              <View style={styles.durationOptions}>
+                {[1, 2, 3, 4, 5].map((h) => (
+                  <TouchableOpacity
+                    key={h}
+                    style={[
+                      styles.durationChip,
+                      durationHours === h && styles.selectedDurationChip
+                    ]}
+                    onPress={() => setDurationHours(h)}
+                  >
+                    <Text style={[
+                      styles.durationText,
+                      durationHours === h && styles.selectedDurationText
+                    ]}>
+                      {h}h
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -271,8 +300,34 @@ const DetailScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHandle} />
-              <Text style={styles.modalTitle}>Choisir un calendrier</Text>
+              <Text style={styles.modalTitle}>Dernière étape</Text>
+              <Text style={styles.modalSubtitle}>Choisis un calendrier et un rappel</Text>
             </View>
+
+            <View style={styles.reminderContainer}>
+              <Text style={styles.sectionTitleSmall}>⏰ Rappel</Text>
+              <View style={styles.reminderOptions}>
+                {[0, 15, 30, 60].map((mins) => (
+                  <TouchableOpacity
+                    key={mins}
+                    style={[
+                      styles.reminderChip,
+                      reminderMinutes === mins && styles.selectedReminderChip
+                    ]}
+                    onPress={() => setReminderMinutes(mins)}
+                  >
+                    <Text style={[
+                      styles.reminderText,
+                      reminderMinutes === mins && styles.selectedReminderText
+                    ]}>
+                      {mins === 0 ? "Aucun" : mins === 60 ? "1h" : `${mins}m`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <Text style={styles.sectionTitleSmall}>📅 Calendrier</Text>
             <FlatList
               data={calendars}
               keyExtractor={(item) => item.id}
@@ -414,7 +469,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end", // Calendar modal at bottom
+    justifyContent: "flex-end",
   },
   pickerContainer: {
     position: "absolute",
@@ -537,6 +592,90 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#8E8E93",
+    marginTop: 4,
+  },
+  sectionTitleSmall: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  reminderContainer: {
+    marginBottom: 20,
+    backgroundColor: "#F2F2F7",
+    padding: 16,
+    borderRadius: 16,
+  },
+  reminderOptions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  reminderChip: {
+    flex: 0.23,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+  },
+  selectedReminderChip: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  reminderText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#3A3A3C",
+  },
+  selectedReminderText: {
+    color: "#fff",
+  },
+  durationContainer: {
+    width: "100%",
+    marginVertical: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+  },
+  durationTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    marginBottom: 10,
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
+  durationOptions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  durationChip: {
+    flex: 0.18,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#F2F2F7",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+  },
+  selectedDurationChip: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+  durationText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#3A3A3C",
+  },
+  selectedDurationText: {
+    color: "#fff",
   },
 });
 
