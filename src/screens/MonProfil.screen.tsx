@@ -1,19 +1,30 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, SafeAreaView, Image, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Camera from "../components/Camera";
+import { StorageService } from "../services/storage.service";
 
 const MonProfilScreen: React.FC = () => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
+
+  useEffect(() => {
+    const loadSavedData = async () => {
+      const savedPhoto = await StorageService.loadProfilePhoto();
+      if (savedPhoto) setPhotoUri(savedPhoto);
+    };
+    loadSavedData();
+  }, []);
 
   if (isCameraVisible) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.cameraWrapper}>
           <Camera
-            onPhotoTaken={(uri) => {
+            onPhotoTaken={async (uri) => {
               setPhotoUri(uri);
               setIsCameraVisible(false);
+              await StorageService.saveProfilePhoto(uri);
             }}
             onClose={() => setIsCameraVisible(false)}
           />
@@ -48,7 +59,10 @@ const MonProfilScreen: React.FC = () => {
         {photoUri && (
           <TouchableOpacity
             style={[styles.actionButton, styles.secondaryButton]}
-            onPress={() => setPhotoUri(null)}
+            onPress={async () => {
+              setPhotoUri(null);
+              await StorageService.saveProfilePhoto(null);
+            }}
           >
             <Text style={styles.secondaryButtonText}>Supprimer la photo</Text>
           </TouchableOpacity>
