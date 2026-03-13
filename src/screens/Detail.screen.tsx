@@ -13,11 +13,9 @@ const DetailScreen: React.FC = () => {
 
   const [date, setDate] = useState(new Date());
   const [tempDate, setTempDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [planningStep, setPlanningStep] = useState<'date' | 'time' | 'calendar' | null>(null);
   const [durationHours, setDurationHours] = useState(2);
   const [calendars, setCalendars] = useState<Calendar.Calendar[]>([]);
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [reminderMinutes, setReminderMinutes] = useState(15);
@@ -59,7 +57,7 @@ const DetailScreen: React.FC = () => {
 
   const onStartPlanning = () => {
     setTempDate(new Date(date));
-    setShowDatePicker(true);
+    setPlanningStep('date');
   };
 
   const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -73,8 +71,7 @@ const DetailScreen: React.FC = () => {
     newDate.setFullYear(tempDate.getFullYear(), tempDate.getMonth(), tempDate.getDate());
     setDate(newDate);
     setTempDate(new Date(newDate));
-    setShowDatePicker(false);
-    setShowTimePicker(true);
+    setPlanningStep('time');
   };
 
   const onChangeTime = (event: DateTimePickerEvent, selectedTime?: Date) => {
@@ -88,10 +85,7 @@ const DetailScreen: React.FC = () => {
     newDate.setHours(tempDate.getHours(), tempDate.getMinutes());
     setDate(newDate);
 
-    // Calculer l'heure de fin pour l'aperçu si besoin (optionnel, supprimé pour simplification)
-
-    setShowTimePicker(false);
-    setShowCalendarModal(true);
+    setPlanningStep('calendar');
   };
 
   const createEvent = async () => {
@@ -126,7 +120,7 @@ const DetailScreen: React.FC = () => {
           date: date.toISOString(),
         });
 
-        setShowCalendarModal(false);
+        setPlanningStep(null);
       }
     } catch (error) {
       console.error(error);
@@ -200,7 +194,7 @@ const DetailScreen: React.FC = () => {
 
       {/* Modal pour le Date Picker */}
       <Modal
-        visible={showDatePicker}
+        visible={planningStep === 'date'}
         transparent={true}
         animationType="fade"
       >
@@ -218,7 +212,7 @@ const DetailScreen: React.FC = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowDatePicker(false)}
+                onPress={() => setPlanningStep(null)}
               >
                 <Text style={styles.modalButtonText}>Annuler</Text>
               </TouchableOpacity>
@@ -235,7 +229,7 @@ const DetailScreen: React.FC = () => {
 
       {/* Modal pour le Time Picker */}
       <Modal
-        visible={showTimePicker}
+        visible={planningStep === 'time'}
         transparent={true}
         animationType="fade"
       >
@@ -276,7 +270,7 @@ const DetailScreen: React.FC = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowTimePicker(false)}
+                onPress={() => setPlanningStep('date')}
               >
                 <Text style={styles.modalButtonText}>Annuler</Text>
               </TouchableOpacity>
@@ -292,7 +286,7 @@ const DetailScreen: React.FC = () => {
       </Modal>
 
       <Modal
-        visible={showCalendarModal}
+        visible={planningStep === 'calendar'}
         transparent={true}
         animationType="slide"
       >
@@ -328,35 +322,41 @@ const DetailScreen: React.FC = () => {
             </View>
 
             <Text style={styles.sectionTitleSmall}>📅 Calendrier</Text>
-            <FlatList
-              data={calendars}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.calendarItem,
-                    selectedCalendarId === item.id && styles.selectedCalendarItem,
-                  ]}
-                  onPress={() => setSelectedCalendarId(item.id)}
-                >
-                  <View style={[styles.calendarColor, { backgroundColor: item.color }]} />
-                  <View style={styles.calendarInfo}>
-                    <Text style={styles.calendarName}>{item.title}</Text>
-                    <Text style={styles.calendarAccount}>{item.source.name}</Text>
-                  </View>
-                  {selectedCalendarId === item.id && (
-                    <View style={styles.checkCircle}>
-                      <Text style={styles.checkIcon}>✓</Text>
+            {calendars.length > 0 ? (
+              <FlatList
+                data={calendars}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.calendarItem,
+                      selectedCalendarId === item.id && styles.selectedCalendarItem,
+                    ]}
+                    onPress={() => setSelectedCalendarId(item.id)}
+                  >
+                    <View style={[styles.calendarColor, { backgroundColor: item.color }]} />
+                    <View style={styles.calendarInfo}>
+                      <Text style={styles.calendarName}>{item.title}</Text>
+                      <Text style={styles.calendarAccount}>{item.source.name}</Text>
                     </View>
-                  )}
-                </TouchableOpacity>
-              )}
-            />
+                    {selectedCalendarId === item.id && (
+                      <View style={styles.checkCircle}>
+                        <Text style={styles.checkIcon}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+            ) : (
+              <View style={styles.emptyCalendarMessage}>
+                <Text style={styles.emptyCalendarText}>Aucun calendrier disponible. Vérifie tes permissions.</Text>
+              </View>
+            )}
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowCalendarModal(false)}
+                onPress={() => setPlanningStep('time')}
               >
                 <Text style={styles.modalButtonText}>Annuler</Text>
               </TouchableOpacity>
@@ -676,6 +676,22 @@ const styles = StyleSheet.create({
   },
   selectedDurationText: {
     color: "#fff",
+  },
+  emptyCalendarMessage: {
+    padding: 30,
+    alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+    borderRadius: 16,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#C7C7CC',
+    marginVertical: 10,
+  },
+  emptyCalendarText: {
+    color: '#8E8E93',
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });
 
