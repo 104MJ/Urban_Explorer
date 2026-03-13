@@ -11,38 +11,7 @@ Urban Explorer est une application mobile de type City Guide développée avec R
 ## Architecture globale de l'application
 
 1.  **Arborescence de l'application**
-    urban_explorer/
-    ├── .expo/
-    │ ├── devices.json
-    │ ├── README.md
-    │ └── settings.json
-    ├── assets/
-    ├── src/
-    │ ├── components/
-    │ │ ├── Camera.tsx
-    │ │ ├── Carte.tsx
-    │ │ ├── EventCard.tsx
-    │ │ └── Localisation.tsx
-    │ ├── screens/
-    │ │ ├── Carte.screen.tsx
-    │ │ ├── Decouverte.screen.tsx
-    │ │ ├── Detail.screen.tsx
-    │ │ └── MonProfil.screen.tsx
-    │ ├── services/
-    │ │ ├── api.service.ts
-    │ │ ├── donee.service.ts
-    │ │ ├── image.service.ts
-    │ │ └── storage.service.ts
-    │ └── types/
-    │ ├── index.ts
-    │ └── navigation.ts
-    ├── .gitignore
-    ├── app.json
-    ├── App.tsx
-    ├── index.ts
-    ├── package.json
-    ├── README.md
-    └── tsconfig.json
+    ![Arborescence](./assets/capture.png)
 
 2.  **Choix de la navigation**
     Dans cette application, Nous avons utiliser React Navigation avec deux types de navigateurs :
