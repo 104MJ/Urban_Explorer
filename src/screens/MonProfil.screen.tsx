@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Camera from "../components/Camera";
 import { StorageService, PlannedVisit } from "../services/storage.service";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Calendar from "expo-calendar";
 
 const MonProfilScreen: React.FC = () => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -25,7 +26,36 @@ const MonProfilScreen: React.FC = () => {
     if (savedPhoto) setPhotoUri(savedPhoto);
 
     const savedVisits = await StorageService.loadPlannedVisits();
-    setPlannedVisits(savedVisits);
+    
+    // 1. Synchronisation avec l'agenda système
+    const verifiedVisits: PlannedVisit[] = [];
+    let needsUpdate = false;
+
+    for (const visit of savedVisits) {
+      try {
+        const event = await Calendar.getEventAsync(visit.eventId);
+        if (event) {
+          verifiedVisits.push(visit);
+        } else {
+          needsUpdate = true; // L'événement n'existe plus dans l'agenda
+        }
+      } catch (e) {
+        // En cas d'erreur (ex: permission), on garde par sécurité
+        verifiedVisits.push(visit);
+      }
+    }
+
+    // 2. Tri par date (du plus récent au plus ancien)
+    const sortedVisits = verifiedVisits.sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    setPlannedVisits(sortedVisits);
+
+    // 3. Mise à jour du stockage local si des visites ont été supprimées
+    if (needsUpdate) {
+      await StorageService.saveAllPlannedVisits(verifiedVisits);
+    }
   };
 
   useFocusEffect(
@@ -139,8 +169,8 @@ const MonProfilScreen: React.FC = () => {
           )}
         </View>
       </View>
-    </ScrollView>
-  </SafeAreaView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

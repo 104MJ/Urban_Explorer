@@ -7,13 +7,13 @@ const KEYS = {
 
 export interface PlannedVisit {
   id: string;
-  eventId: string; // ID from Expo Calendar
+  eventId: string;
   eventTitle: string;
   date: string;
 }
 
 export const StorageService = {
-  // --- Profile Photo ---
+  // ---  Photo de profil ---
   saveProfilePhoto: async (uri: string | null) => {
     try {
       if (uri) {
@@ -35,7 +35,7 @@ export const StorageService = {
     }
   },
 
-  // --- Planned Visits ---
+  // --- visites planifiées ---
   savePlannedVisit: async (visit: PlannedVisit) => {
     try {
       const existingVisits = await StorageService.loadPlannedVisits();
@@ -53,6 +53,14 @@ export const StorageService = {
     } catch (error) {
       console.error('Error loading planned visits:', error);
       return [];
+    }
+  },
+
+  saveAllPlannedVisits: async (visits: PlannedVisit[]) => {
+    try {
+      await AsyncStorage.setItem(KEYS.PLANNED_VISITS, JSON.stringify(visits));
+    } catch (error) {
+      console.error('Error saving all planned visits:', error);
     }
   },
 };
