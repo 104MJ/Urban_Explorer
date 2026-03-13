@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   TextInput,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { DiscoveryNavigationProp } from "../types/navigation";
 import { UrbanEvent } from "../types";
@@ -43,7 +43,13 @@ const DiscoveryScreen: React.FC = () => {
         if (pageNumber === 1) {
           setEvents(response.data.results);
         } else {
-          setEvents((prevEvents) => [...prevEvents, ...response.data.results]);
+          setEvents((prevEvents) => {
+            const allEvents = [...prevEvents, ...response.data.results];
+            // Déduplication par ID
+            return allEvents.filter((event, index, self) =>
+              index === self.findIndex((e) => e.id === event.id)
+            );
+          });
         }
       }
     } catch (error) {

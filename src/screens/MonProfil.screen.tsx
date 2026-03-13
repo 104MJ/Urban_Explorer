@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,22 +6,35 @@ import {
   Image,
   TouchableOpacity,
   Animated,
+  ScrollView,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Camera from "../components/Camera";
-import { StorageService } from "../services/storage.service";
+import { StorageService, PlannedVisit } from "../services/storage.service";
+import { useFocusEffect } from "@react-navigation/native";
 
 const MonProfilScreen: React.FC = () => {
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [plannedVisits, setPlannedVisits] = useState<PlannedVisit[]>([]);
   const [isCameraVisible, setIsCameraVisible] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
+  const loadSavedData = async () => {
+    const savedPhoto = await StorageService.loadProfilePhoto();
+    if (savedPhoto) setPhotoUri(savedPhoto);
+
+    const savedVisits = await StorageService.loadPlannedVisits();
+    setPlannedVisits(savedVisits);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSavedData();
+    }, [])
+  );
+
   useEffect(() => {
-    const loadSavedData = async () => {
-      const savedPhoto = await StorageService.loadProfilePhoto();
-      if (savedPhoto) setPhotoUri(savedPhoto);
-    };
-    loadSavedData();
 
     const pulse = Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -57,7 +70,8 @@ const MonProfilScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.profileContainer}>
+      <ScrollView>
+        <View style={styles.profileContainer}>
         <View style={styles.avatarContainer}>
           {photoUri ? (
             <Image source={{ uri: photoUri }} style={styles.avatar} />
@@ -69,7 +83,9 @@ const MonProfilScreen: React.FC = () => {
         </View>
 
         <Text style={styles.name}>Explorateur Urbain</Text>
-        <Text style={styles.stats}>0 lieux visités</Text>
+        <Text style={styles.stats}>
+          {plannedVisits.length} lieu{plannedVisits.length > 1 ? "x" : ""} planifié{plannedVisits.length > 1 ? "s" : ""}
+        </Text>
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <TouchableOpacity
             style={styles.actionButton}
@@ -92,8 +108,39 @@ const MonProfilScreen: React.FC = () => {
             <Text style={styles.secondaryButtonText}>Supprimer la photo</Text>
           </TouchableOpacity>
         )}
+
+        <View style={styles.visitsSection}>
+          <Text style={styles.sectionTitle}>📅 Mes Visites Planifiées</Text>
+          {plannedVisits.length > 0 ? (
+            plannedVisits.map((visit) => (
+              <View key={visit.eventId} style={styles.visitCard}>
+                <View style={styles.visitInfo}>
+                  <Text style={styles.visitTitle}>{visit.eventTitle}</Text>
+                  <Text style={styles.visitDate}>
+                    {new Date(visit.date).toLocaleDateString("fr-FR", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })} à {new Date(visit.date).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.visitBadge}>
+                  <Text style={styles.visitBadgeText}>Prévu</Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.emptyVisits}>
+              <Text style={styles.emptyText}>Aucune visite planifiée pour le moment.</Text>
+            </View>
+          )}
+        </View>
       </View>
-    </SafeAreaView>
+    </ScrollView>
+  </SafeAreaView>
   );
 };
 
@@ -172,6 +219,71 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: "#FF3B30",
+  },
+  visitsSection: {
+    width: "100%",
+    marginTop: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1a1a1a",
+    marginBottom: 20,
+  },
+  visitCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  visitInfo: {
+    flex: 1,
+  },
+  visitTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+    marginBottom: 4,
+  },
+  visitDate: {
+    fontSize: 13,
+    color: "#8E8E93",
+    textTransform: "capitalize",
+  },
+  visitBadge: {
+    backgroundColor: "#EBF5FF",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  visitBadgeText: {
+    color: "#007AFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  emptyVisits: {
+    backgroundColor: "#fff",
+    padding: 30,
+    borderRadius: 16,
+    alignItems: "center",
+    borderStyle: "dashed",
+    borderWidth: 1,
+    borderColor: "#C7C7CC",
+  },
+  emptyText: {
+    color: "#8E8E93",
+    fontSize: 15,
+    textAlign: "center",
   },
 });
 
